@@ -1,0 +1,3 @@
+[submodule "libp2p-rust-dht"]
+	path = libp2p-rust-dht
+	url = git@github.com:sifis-home/libp2p-rust-dht.git
