@@ -13,7 +13,7 @@ pub enum YggioEvent {
     Connected,
     Disconnected,
     GotMessage,
-    GotVolatileMessage,
+    //GotVolatileMessage,
     None,
 }
 
@@ -113,8 +113,8 @@ impl YggioManager {
 
                 let v: serde_json::Value = serde_json::from_str(&payload_string).unwrap();
 
-                if let Some(iotNode) = v.get("iotnode") {
-                    if let Some(value) = iotNode.get("value") {
+                if let Some(iot_node) = v.get("iotnode") {
+                    if let Some(value) = iot_node.get("value") {
                         println!("{}", value);
                     }
                 }
@@ -128,7 +128,7 @@ impl YggioManager {
                 println!("Outgoing = {:?}", o);
                 return YggioEvent::None;
             }
-            Err(e) => {
+            Err(_) => {
                 //println!("Error = {:?}", e);
                 self.connected = false;
                 return YggioEvent::Disconnected;
