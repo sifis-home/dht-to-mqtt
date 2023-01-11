@@ -9,6 +9,8 @@ It basically forwards data to/from the SIFIS-HOME DHT to/from the Yggio MQTT Bro
 
 # Acknowledgements
 
+This software has been partially developed in the scope of the H2020 project SIFIS-Home with GA n. 952652.
+
 <!-- Links -->
 [actions]: https://github.com/<your-account>/dht-to-mqtt/actions
 [codecov]: https://codecov.io/gh/<your-account>/dht-to-mqtt
