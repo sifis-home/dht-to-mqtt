@@ -1,5 +1,5 @@
-mod yggiomanager;
 mod utils;
+mod yggiomanager;
 use crate::yggiomanager::{YggioEvent, YggioManager};
 use sifis_dht::domocache::{DomoCache, DomoEvent};
 use sifis_dht::domopersistentstorage::SqliteStorage;
@@ -17,9 +17,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let local_key = libp2p::identity::Keypair::rsa_from_pkcs8(&mut pkcs8_der)
         .map_err(|e| format!("Couldn't load key: {e:?}"))?;
 
-
-    let mut sifis_cache =
-        sifis_dht::domocache::DomoCache::new(true, storage, dht_shared_key.to_owned(), local_key, false).await;
+    let mut sifis_cache = sifis_dht::domocache::DomoCache::new(
+        true,
+        storage,
+        dht_shared_key.to_owned(),
+        local_key,
+        false,
+    )
+    .await;
 
     let mut yggio_manager = yggiomanager::YggioManager::new()?;
 
