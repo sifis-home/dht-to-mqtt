@@ -64,8 +64,7 @@ impl YggioManager {
         payload_string: String,
     ) {
         if self.connected {
-            self
-                .client
+            self.client
                 .publish(
                     MQTT_PUBLISH_PREFIX.to_owned() + "/" + topic_name + "/" + topic_uuid,
                     QoS::AtMostOnce,
@@ -84,8 +83,7 @@ impl YggioManager {
                 println!("Connected to the broker");
                 self.connected = true;
 
-                self
-                    .client
+                self.client
                     .subscribe(MQTT_SUBSCRIBE_TOPIC, QoS::AtMostOnce)
                     .await
                     .unwrap();
