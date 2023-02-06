@@ -64,7 +64,7 @@ impl YggioManager {
         payload_string: String,
     ) {
         if self.connected {
-            let _ret = self
+            self
                 .client
                 .publish(
                     MQTT_PUBLISH_PREFIX.to_owned() + "/" + topic_name + "/" + topic_uuid,
@@ -84,13 +84,13 @@ impl YggioManager {
                 println!("Connected to the broker");
                 self.connected = true;
 
-                let mut _ret = self
+                self
                     .client
                     .subscribe(MQTT_SUBSCRIBE_TOPIC, QoS::AtMostOnce)
                     .await
                     .unwrap();
 
-                return YggioEvent::Connected;
+                YggioEvent::Connected
 
                 /*
                 // by publishing a fake message we force Yggio to publish the current saved state
@@ -115,23 +115,23 @@ impl YggioManager {
 
                 if let Some(iot_node) = v.get("iotnode") {
                     if let Some(value) = iot_node.get("value") {
-                        println!("{}", value);
+                        println!("{value}");
                     }
                 }
-                return YggioEvent::GotMessage;
+                YggioEvent::GotMessage
             }
             Ok(Event::Incoming(i)) => {
-                println!("Incoming = {:?}", i);
-                return YggioEvent::None;
+                println!("Incoming = {i:?}");
+                YggioEvent::None
             }
             Ok(Event::Outgoing(o)) => {
-                println!("Outgoing = {:?}", o);
-                return YggioEvent::None;
+                println!("Outgoing = {o:?}");
+                YggioEvent::None
             }
             Err(_) => {
                 //println!("Error = {:?}", e);
                 self.connected = false;
-                return YggioEvent::Disconnected;
+                YggioEvent::Disconnected
             }
         }
     }

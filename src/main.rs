@@ -33,13 +33,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
             event = yggio_manager.event_loop() => {
 
-                match event {
-                    YggioEvent::Connected => {
+                if let YggioEvent::Connected = event {
                         // publish entire cache on MQTT
                         println!("PUB ENTIRE CACHE ON MQTT");
                         publish_all_on_mqtt(&mut sifis_cache, &mut yggio_manager).await;
-                    }
-                    _ => {}
                 }
             }
 
@@ -47,22 +44,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 match message {
                     Ok(m) => {
-                        match m {
-                            DomoEvent::PersistentData(m) => {
-                                println!("Persistent {}", m);
+                        if let DomoEvent::PersistentData(m) = m {
+                                println!("Persistent {m}");
 
                                 // publish persistent message on Yggio
                                 let m2 = serde_json::to_string(&m).unwrap();
 
                                 yggio_manager.publish_on_mqtt(&m.topic_name, &m.topic_uuid, m2).await;
-
-                            },
-                            _ => {
-                            }
                         }
                     },
                     Err(e) => {
-                        println!("{}", e);
+                        println!("{e}");
                     }
                 }
 
@@ -80,7 +72,7 @@ async fn publish_all_on_mqtt(
         for (topic_uuid, cache_element) in topic_name_map.iter() {
             let m = serde_json::to_string(cache_element).unwrap();
             yggio_manager
-                .publish_on_mqtt(&topic_name, &topic_uuid, m)
+                .publish_on_mqtt(topic_name, topic_uuid, m)
                 .await;
         }
     }
