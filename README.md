@@ -1,7 +1,6 @@
 # dht-to-mqtt
 
 [![Actions Status][actions badge]][actions]
-[![CodeCov][codecov badge]][codecov]
 [![LICENSE][license badge]][license]
 
 This is a preliminary w.i.p. version of the Fiware API component. 
@@ -13,10 +12,8 @@ This software has been partially developed in the scope of the H2020 project SIF
 
 <!-- Links -->
 [actions]: https://github.com/sifis-home/dht-to-mqtt/actions
-[codecov]: https://codecov.io/gh/sifis-home/dht-to-mqtt
 [license]: LICENSE
 
 <!-- Badges -->
 [actions badge]: https://github.com/sifis-home/dht-to-mqtt/workflows/dht-to-mqtt/badge.svg
-[codecov badge]: https://codecov.io/gh/sifis-home/dht-to-mqtt/branch/master/graph/badge.svg
 [license badge]: https://img.shields.io/badge/license-MIT-blue.svg
