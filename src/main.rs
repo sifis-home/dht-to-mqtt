@@ -4,6 +4,7 @@ use crate::yggiomanager::{YggioEvent, YggioManager};
 use sifis_dht::domocache::{DomoCache, DomoEvent};
 use sifis_dht::domopersistentstorage::SqliteStorage;
 use std::error::Error;
+use sifis_dht::Keypair;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -14,7 +15,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let mut pkcs8_der = utils::generate_rsa_key().1;
 
-    let local_key = libp2p::identity::Keypair::rsa_from_pkcs8(&mut pkcs8_der)
+    let local_key = Keypair::rsa_from_pkcs8(&mut pkcs8_der)
         .map_err(|e| format!("Couldn't load key: {e:?}"))?;
 
     let mut sifis_cache = sifis_dht::domocache::DomoCache::new(

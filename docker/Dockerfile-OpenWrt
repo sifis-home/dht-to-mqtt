@@ -1,0 +1,3 @@
+FROM arm64v8/alpine
+ADD dht-to-mqtt /
+ENTRYPOINT ["/dht-to-mqtt"]
