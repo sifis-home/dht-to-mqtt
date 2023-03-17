@@ -2,17 +2,26 @@ use rumqttc::{self, AsyncClient, Event, EventLoop, Incoming, MqttOptions, Packet
 use rustls::ClientConfig;
 use std::error::Error;
 
+
+const BASIC_CREDENTIALS_SET_ID : &str = "6335585ffaf1370008dec0fc";
+const YGGIO_API_URL: &str = "https://yggio.sifis-home.eu/api/";
+const USERNAME: &str = "domenico.deguglielmo";
+const PASSWORD: &str = "domenico.deguglielmo";
+
 const MQTT_BROKER_URL: &str = "mqtt.yggio.sifis-home.eu";
 const MQTT_PORT: u16 = 8883;
 const MQTT_USER: &str = "sifishome";
 const MQTT_PASSWORD: &str = "sifishome";
-const MQTT_PUBLISH_PREFIX: &str = "yggio/generic/v2/sifisdht";
-const MQTT_SUBSCRIBE_TOPIC: &str = "yggio/output/v2/6335585ffaf1370008dec0fc/#";
+
+const MQTT_PUBLISH_PREFIX: &str = "yggio/generic/v2/";
+
+// this is the mqtt topic from which we can receive updates from all the iotNodes present in Yggio
+const MQTT_SUBSCRIBE_TOPIC: &str = "yggio/output/v2/6335585ffaf1370008dec0fc/iotnode/64144eab0b6304ad3bdd713c";
 
 pub enum YggioEvent {
     Connected,
     Disconnected,
-    GotMessage,
+    GotMessage(serde_json::Value),
     //GotVolatileMessage,
     None,
 }
@@ -21,6 +30,7 @@ pub struct YggioManager {
     pub client: AsyncClient,
     pub event_loop: EventLoop,
     pub connected: bool,
+    pub token: String,
 }
 
 impl YggioManager {
@@ -50,12 +60,71 @@ impl YggioManager {
 
         let connected = false;
 
+        let token = String::from("");
         Ok(YggioManager {
             client,
             event_loop,
             connected,
+            token,
         })
     }
+
+    pub async fn get_auth_token(&self) -> Result<String, Box<dyn Error>> {
+        let cred_message = serde_json::json!({"username": USERNAME, "password": PASSWORD});
+
+        let client = reqwest::Client::new();
+        let res = client
+            .post(YGGIO_API_URL.to_owned() + "auth/local")
+            .json(&cred_message)
+            .send()
+            .await;
+
+        if let Ok(res) = res {
+            if res.status() == reqwest::StatusCode::OK {
+                if let Ok(body_text) = res.text().await {
+                    let body: serde_json::Value = serde_json::from_str(&body_text)?;
+                    if let Some(token) = body.get("token") {
+                        let token = token.as_str().unwrap();
+                        return Ok(token.to_owned());
+                    }
+                }
+            }
+        }
+
+        Err("error".into())
+    }
+
+
+    pub async fn reserve_mqtt_topic(&self, token: &str, topic_name: &str, topic_uuid: &str) -> Result<(), Box<dyn Error>> {
+        let client = reqwest::Client::new();
+        let reserved_topic_message = serde_json::json!(
+            {
+                "topic": MQTT_PUBLISH_PREFIX.to_owned() + topic_name + "-" + topic_uuid,
+                "basicCredentialsSetId": BASIC_CREDENTIALS_SET_ID
+            });
+
+        println!("Reserving MQTT TOPIC: {}", MQTT_PUBLISH_PREFIX.to_owned() + topic_name + "-" + topic_uuid);
+        println!("for ");
+        println!("{}", BASIC_CREDENTIALS_SET_ID);
+
+
+        let _res = client
+            .post(YGGIO_API_URL.to_owned() + "reserved-mqtt-topics")
+            .header("Content-type", "application/json")
+            .bearer_auth(token)
+            .json(&reserved_topic_message)
+            .send()
+            .await;
+
+        if let Ok(r) = _res {
+            let status = r.status().clone();
+            let text = r.text().await.unwrap();
+            println!("{} {}", status, text);
+        }
+
+        Ok(())
+    }
+
 
     pub async fn publish_on_mqtt(
         &mut self,
@@ -63,16 +132,23 @@ impl YggioManager {
         topic_uuid: &str,
         payload_string: String,
     ) {
-        if self.connected {
-            self.client
-                .publish(
-                    MQTT_PUBLISH_PREFIX.to_owned() + "/" + topic_name + "/" + topic_uuid,
-                    QoS::AtMostOnce,
-                    false,
-                    payload_string.into_bytes(),
-                )
-                .await
-                .unwrap();
+        let token = self.get_auth_token().await;
+
+        if let Ok(token) = token {
+
+            let _ret = self.reserve_mqtt_topic(&token, topic_name, topic_uuid).await;
+
+            if self.connected {
+                self.client
+                    .publish(
+                        MQTT_PUBLISH_PREFIX.to_owned() + topic_name + "-" + topic_uuid,
+                        QoS::AtMostOnce,
+                        false,
+                        payload_string.into_bytes(),
+                    )
+                    .await
+                    .unwrap();
+            }
         }
     }
 
@@ -106,17 +182,20 @@ impl YggioManager {
                     p.topic, p.payload, p.retain
                 );
 
-                let payload_string =
-                    String::from_utf8_lossy(p.payload.to_vec().as_slice()).to_string();
+                 let payload_string =
+                     String::from_utf8_lossy(p.payload.to_vec().as_slice()).to_string();
 
-                let v: serde_json::Value = serde_json::from_str(&payload_string).unwrap();
+                 let v: serde_json::Value = serde_json::from_str(&payload_string).unwrap();
 
-                if let Some(iot_node) = v.get("iotnode") {
-                    if let Some(value) = iot_node.get("value") {
-                        println!("{value}");
-                    }
-                }
-                YggioEvent::GotMessage
+                 if let Some(iot_node) = v.get("iotnode") {
+                     if let Some(value) = iot_node.get("value") {
+                         //println!("{value}");
+                         return YggioEvent::GotMessage(value.to_owned());
+                     }
+                 }
+
+                 YggioEvent::None
+
             }
             Ok(Event::Incoming(i)) => {
                 println!("Incoming = {i:?}");

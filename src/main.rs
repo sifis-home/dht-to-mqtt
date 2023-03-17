@@ -39,6 +39,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
                         println!("PUB ENTIRE CACHE ON MQTT");
                         publish_all_on_mqtt(&mut sifis_cache, &mut yggio_manager).await;
                 }
+
+                if let YggioEvent::GotMessage(m) = event {
+                    println!("Yggio command received");
+                    println!("{}", m);
+                }
             }
 
             message = sifis_cache.cache_event_loop() => {
