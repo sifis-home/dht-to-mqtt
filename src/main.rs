@@ -1,31 +1,39 @@
-mod utils;
 mod yggiomanager;
 use crate::yggiomanager::{YggioEvent, YggioManager};
 use sifis_dht::domocache::{DomoCache, DomoEvent};
-use sifis_dht::domopersistentstorage::SqliteStorage;
-use sifis_dht::Keypair;
 use std::error::Error;
+use clap::Parser;
+use sifis_config::{Cache, ConfigParser};
+use serde::{Deserialize, Serialize};
+
+#[derive(Parser, Debug, Serialize, Deserialize)]
+struct DhtToMqtt {
+    #[clap(flatten)]
+    pub cache: Cache,
+}
+
+
+#[derive(Parser, Debug, Serialize, Deserialize)]
+struct Opt {
+    #[clap(flatten)]
+    dht_to_mqtt: DhtToMqtt,
+}
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     env_logger::init();
-    let dht_shared_key = "5a52aafb2a44ff5c360d4dc04e4a792e28637da07b96072a2f0a5ea5286f2738";
 
-    let storage = sifis_dht::domopersistentstorage::SqliteStorage::new("/tmp/mqtt.sqlite", true);
+    let opt = ConfigParser::<Opt>::new()
+        .with_config_path("/etc/domo/dht_to_mqtt.toml")
+        .parse();
 
-    let mut pkcs8_der = utils::generate_rsa_key().1;
-
-    let local_key =
-        Keypair::rsa_from_pkcs8(&mut pkcs8_der).map_err(|e| format!("Couldn't load key: {e:?}"))?;
+    let opt = opt.dht_to_mqtt;
 
     let mut sifis_cache = sifis_dht::domocache::DomoCache::new(
-        true,
-        storage,
-        dht_shared_key.to_owned(),
-        local_key,
-        false,
+  opt.cache
     )
-    .await;
+    .await?;
 
     let mut yggio_manager = yggiomanager::YggioManager::new()?;
 
@@ -71,7 +79,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn publish_all_on_mqtt(
-    sifis_cache: &mut DomoCache<SqliteStorage>,
+    sifis_cache: &mut DomoCache,
     yggio_manager: &mut YggioManager,
 ) {
     for (topic_name, topic_name_map) in sifis_cache.cache.iter() {
