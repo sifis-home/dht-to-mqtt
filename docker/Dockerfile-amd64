@@ -1,3 +1,5 @@
 FROM amd64/alpine
 ADD dht-to-mqtt /
-ENTRYPOINT ["/dht-to-mqtt"]
+ADD run_manager.sh /
+RUN chmod +x /run_manager.sh
+ENTRYPOINT ["/run_manager.sh"]

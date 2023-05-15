@@ -139,15 +139,17 @@ impl YggioManager {
     ) {
         let token = self.get_auth_token().await;
 
+        //let topic_name = topic_name.replace("_", "");
+
         if let Ok(token) = token {
             let _ret = self
-                .reserve_mqtt_topic(&token, topic_name, topic_uuid)
+                .reserve_mqtt_topic(&token, &topic_name, topic_uuid)
                 .await;
 
             if self.connected {
                 self.client
                     .publish(
-                        MQTT_PUBLISH_PREFIX.to_owned() + topic_name + "-" + topic_uuid,
+                        MQTT_PUBLISH_PREFIX.to_owned() + &topic_name + "-" + topic_uuid,
                         QoS::AtMostOnce,
                         false,
                         payload_string.into_bytes(),
