@@ -37,12 +37,10 @@ jobs:
       with:
         push: true
         tags: ghcr.io/${{ github.repository_owner }}/sifis-dht-to-mqtt-amd64:latest
-        context: target/x86_64-unknown-linux-musl/release
         file: docker/Dockerfile-amd64
     - name: Build and push arm64v8
       uses: docker/build-push-action@v4
       with:
         push: true
         tags: ghcr.io/${{ github.repository_owner }}/sifis-dht-to-mqtt-arm64v8:latest
-        context: target/aarch64-unknown-linux-musl/release
         file: docker/Dockerfile-OpenWrt

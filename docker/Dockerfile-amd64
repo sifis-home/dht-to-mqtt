@@ -1,5 +1,5 @@
 FROM amd64/alpine
-ADD dht-to-mqtt /
+ADD target/x86_64-unknown-linux-musl/release/dht-to-mqtt /
 ADD run_manager.sh /
 RUN chmod +x /run_manager.sh
 ENTRYPOINT ["/run_manager.sh"]
