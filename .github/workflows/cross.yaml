@@ -38,9 +38,11 @@ jobs:
         push: true
         tags: ghcr.io/${{ github.repository_owner }}/sifis-dht-to-mqtt-amd64:latest
         file: docker/Dockerfile-amd64
+        context: .
     - name: Build and push arm64v8
       uses: docker/build-push-action@v4
       with:
         push: true
         tags: ghcr.io/${{ github.repository_owner }}/sifis-dht-to-mqtt-arm64v8:latest
         file: docker/Dockerfile-OpenWrt
+        context: .
