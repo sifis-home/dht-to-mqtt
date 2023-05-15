@@ -26,6 +26,8 @@ jobs:
     - name: Launch cross-compile.sh script
       run: |
         ./cross-compile.sh
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
     - name: Login to GitHub container registry (ghcr.io)
       uses: docker/login-action@v2
       with:
