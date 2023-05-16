@@ -21,7 +21,7 @@ function stop_dht_to_mqtt() {
 
     ppid=$(ps | grep dht-to-mqtt | awk '{print $1}' | head -n 1)
 
-    pkill $force -P $ppid
+    kill $force $ppid
 
     if [ $? -eq 0 ]; then  # il processo esisteva ed è stato killato
       echo "Killed dht-to-mqtt "
