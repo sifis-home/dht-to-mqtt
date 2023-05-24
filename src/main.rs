@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 println!("Persistent {m}");
 
                                 // publish persistent message on Yggio
-                                let m2 = serde_json::to_string(&m).unwrap();
+                                let m2 = serde_json::to_string(&m.value).unwrap();
 
                                 yggio_manager.publish_on_mqtt(&m.topic_name, &m.topic_uuid, m2).await;
                         }
