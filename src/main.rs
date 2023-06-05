@@ -1,10 +1,10 @@
 mod yggiomanager;
 use crate::yggiomanager::{YggioEvent, YggioManager};
+use clap::Parser;
+use serde::{Deserialize, Serialize};
+use sifis_config::{Cache, ConfigParser};
 use sifis_dht::domocache::{DomoCache, DomoEvent};
 use std::error::Error;
-use clap::Parser;
-use sifis_config::{Cache, ConfigParser};
-use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 struct DhtToMqtt {
@@ -15,13 +15,11 @@ struct DhtToMqtt {
     pub testbed_type: String,
 }
 
-
 #[derive(Parser, Debug, Serialize, Deserialize)]
 struct Opt {
     #[clap(flatten)]
     dht_to_mqtt: DhtToMqtt,
 }
-
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -33,15 +31,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let opt = opt.dht_to_mqtt;
 
-    let mut sifis_cache = sifis_dht::domocache::DomoCache::new(
-  opt.cache
-    )
-    .await?;
+    let mut sifis_cache = sifis_dht::domocache::DomoCache::new(opt.cache).await?;
 
     let mut yggio_manager = yggiomanager::YggioManager::new(&opt.testbed_type)?;
 
     loop {
-
         tokio::select! {
 
             event = yggio_manager.event_loop() => {
@@ -82,10 +76,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
-async fn publish_all_on_mqtt(
-    sifis_cache: &mut DomoCache,
-    yggio_manager: &mut YggioManager,
-) {
+async fn publish_all_on_mqtt(sifis_cache: &mut DomoCache, yggio_manager: &mut YggioManager) {
     for (topic_name, topic_name_map) in sifis_cache.cache.iter() {
         for (topic_uuid, cache_element) in topic_name_map.iter() {
             let m = serde_json::to_string(cache_element).unwrap();
