@@ -10,6 +10,9 @@ use serde::{Deserialize, Serialize};
 struct DhtToMqtt {
     #[clap(flatten)]
     pub cache: Cache,
+
+    #[arg(long, default_value = "emulated")]
+    pub testbed_type: String,
 }
 
 
@@ -35,9 +38,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .await?;
 
-    let mut yggio_manager = yggiomanager::YggioManager::new()?;
+    let mut yggio_manager = yggiomanager::YggioManager::new(&opt.testbed_type)?;
 
     loop {
+
         tokio::select! {
 
             event = yggio_manager.event_loop() => {
