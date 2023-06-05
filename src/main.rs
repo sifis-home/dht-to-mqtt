@@ -42,6 +42,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     loop {
 
+        println!("Main select");
         tokio::select! {
 
             event = yggio_manager.event_loop() => {
@@ -94,4 +95,6 @@ async fn publish_all_on_mqtt(
                 .await;
         }
     }
+
+    println!("PUBLISH ALL DONE");
 }

@@ -1,6 +1,7 @@
 use rumqttc::{self, AsyncClient, Event, EventLoop, Incoming, MqttOptions, Packet, QoS, Transport};
 use rustls::ClientConfig;
 use std::error::Error;
+use std::time::Duration;
 
 const MQTT_BROKER_URL: &str = "mqtt.yggio.sifis-home.eu";
 const MQTT_PORT: u16 = 8883;
@@ -42,7 +43,8 @@ pub struct YggioManager {
     pub event_loop: EventLoop,
     pub connected: bool,
     pub token: String,
-    pub testbed_type: String
+    pub testbed_type: String,
+    pub pub_counter: u16
 }
 
 
@@ -52,6 +54,8 @@ impl YggioManager {
         let mut mqttoptions = MqttOptions::new("sifis-dht-client", MQTT_BROKER_URL, MQTT_PORT);
 
         mqttoptions.set_keep_alive(std::time::Duration::from_secs(5));
+        mqttoptions.set_keep_alive(Duration::from_secs(10));
+        mqttoptions.set_inflight(100);
 
         if testbed_type == "emulated" {
             mqttoptions.set_credentials(MQTT_USER, MQTT_PASSWORD);
@@ -77,7 +81,7 @@ impl YggioManager {
 
         mqttoptions.set_transport(Transport::tls_with_config(client_config.into()));
 
-        let (client, event_loop) = AsyncClient::new(mqttoptions, 10);
+        let (client, event_loop) = AsyncClient::new(mqttoptions, 100);
 
         let connected = false;
 
@@ -87,7 +91,8 @@ impl YggioManager {
             event_loop,
             connected,
             token,
-            testbed_type
+            testbed_type,
+            pub_counter: 0
         })
     }
 
@@ -192,15 +197,21 @@ impl YggioManager {
 
             if self.connected {
                 let mqtt_topic_string = MQTT_PUBLISH_PREFIX.to_owned() + &topic_name + "-" + topic_uuid + "-" + &self.testbed_type;
-                if let Ok(_) = self.client
+
+                let pub_ret = self.client
                     .publish(
                         mqtt_topic_string,
                         QoS::AtMostOnce,
                         false,
                         payload_string.into_bytes(),
                     )
-                    .await {
-                    println!("Pub on MQTT");
+                    .await;
+
+                if let Ok(_) = pub_ret {
+                    println!("Pub on MQTT {}", self.pub_counter);
+                    self.pub_counter = self.pub_counter + 1;
+                }  else {
+                    println!("Pub error on MQTT");
                 }
             }
         } else {
