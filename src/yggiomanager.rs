@@ -50,9 +50,12 @@ pub struct YggioManager {
 impl YggioManager {
     pub fn new(testbed_type: &str) -> Result<Self, Box<dyn Error>> {
         let testbed_type = testbed_type.to_owned();
-        let mut mqttoptions = MqttOptions::new("sifis-dht-client", MQTT_BROKER_URL, MQTT_PORT);
+        let mut mqttoptions = MqttOptions::new("sifis-dht-client-emulated", MQTT_BROKER_URL, MQTT_PORT);
 
-        mqttoptions.set_keep_alive(std::time::Duration::from_secs(5));
+        if testbed_type == "physical" {
+            mqttoptions = MqttOptions::new("sifis-dht-client-physical", MQTT_BROKER_URL, MQTT_PORT);
+        }
+
         mqttoptions.set_keep_alive(Duration::from_secs(10));
         mqttoptions.set_inflight(100);
 
