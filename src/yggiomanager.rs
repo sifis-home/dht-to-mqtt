@@ -20,8 +20,8 @@ const BASIC_CREDENTIALS_SET_ID: &str = "6463ab4545b7d8d57adba603";
 // PHYSICAL ----
 
 const BASIC_CREDENTIALS_SET_ID_PHYSICAL: &str = "647da69774dabeee5bfaf8e2";
-const MQTT_USER_PHYSICAL : &str = "physical";
-const MQTT_PASSWORD_PHYSICAL : &str = "physical";
+const MQTT_USER_PHYSICAL: &str = "physical";
+const MQTT_PASSWORD_PHYSICAL: &str = "physical";
 // ---
 
 const MQTT_PUBLISH_PREFIX: &str = "yggio/generic/v2/";
@@ -44,9 +44,8 @@ pub struct YggioManager {
     pub connected: bool,
     pub token: String,
     pub testbed_type: String,
-    pub pub_counter: u16
+    pub pub_counter: u16,
 }
-
 
 impl YggioManager {
     pub fn new(testbed_type: &str) -> Result<Self, Box<dyn Error>> {
@@ -64,7 +63,6 @@ impl YggioManager {
         if testbed_type == "physical" {
             mqttoptions.set_credentials(MQTT_USER_PHYSICAL, MQTT_PASSWORD_PHYSICAL);
         }
-
 
         // Use rustls-native-certs to load root certificates from the operating system.
         let mut root_cert_store = rustls::RootCertStore::empty();
@@ -92,7 +90,7 @@ impl YggioManager {
             connected,
             token,
             testbed_type,
-            pub_counter: 0
+            pub_counter: 0,
         })
     }
 
@@ -129,13 +127,11 @@ impl YggioManager {
     ) -> Result<(), Box<dyn Error>> {
         let client = reqwest::Client::new();
 
-
         let mut reserved_topic_message = serde_json::json!(
-            {
-                "topic": MQTT_PUBLISH_PREFIX.to_owned() + topic_name + "-" + topic_uuid + "-" + &self.testbed_type,
-                "basicCredentialsSetId": BASIC_CREDENTIALS_SET_ID
-            });
-
+        {
+            "topic": MQTT_PUBLISH_PREFIX.to_owned() + topic_name + "-" + topic_uuid + "-" + &self.testbed_type,
+            "basicCredentialsSetId": BASIC_CREDENTIALS_SET_ID
+        });
 
         if self.testbed_type == "physical" {
             reserved_topic_message = serde_json::json!(
@@ -145,10 +141,14 @@ impl YggioManager {
             });
         }
 
-
         println!(
             "Reserving MQTT TOPIC: {}",
-            MQTT_PUBLISH_PREFIX.to_owned() + topic_name + "-" + topic_uuid + "-" + &self.testbed_type
+            MQTT_PUBLISH_PREFIX.to_owned()
+                + topic_name
+                + "-"
+                + topic_uuid
+                + "-"
+                + &self.testbed_type
         );
 
         println!("for ");
@@ -160,8 +160,6 @@ impl YggioManager {
         if self.testbed_type == "physical" {
             println!("{}", BASIC_CREDENTIALS_SET_ID_PHYSICAL);
         }
-
-
 
         let _res = client
             .post(YGGIO_API_URL.to_owned() + "reserved-mqtt-topics")
@@ -196,9 +194,15 @@ impl YggioManager {
                 .await;
 
             if self.connected {
-                let mqtt_topic_string = MQTT_PUBLISH_PREFIX.to_owned() + &topic_name + "-" + topic_uuid + "-" + &self.testbed_type;
+                let mqtt_topic_string = MQTT_PUBLISH_PREFIX.to_owned()
+                    + &topic_name
+                    + "-"
+                    + topic_uuid
+                    + "-"
+                    + &self.testbed_type;
 
-                let pub_ret = self.client
+                let pub_ret = self
+                    .client
                     .publish(
                         mqtt_topic_string,
                         QoS::AtMostOnce,
@@ -210,7 +214,7 @@ impl YggioManager {
                 if let Ok(_) = pub_ret {
                     println!("Pub on MQTT {}", self.pub_counter);
                     self.pub_counter = self.pub_counter + 1;
-                }  else {
+                } else {
                     println!("Pub error on MQTT");
                 }
             }
@@ -226,10 +230,10 @@ impl YggioManager {
                 println!("Connected to the broker");
                 self.connected = true;
 
-/*                self.client
-                    .subscribe(MQTT_SUBSCRIBE_TOPIC, QoS::AtMostOnce)
-                    .await
-                    .unwrap();*/
+                /*                self.client
+                .subscribe(MQTT_SUBSCRIBE_TOPIC, QoS::AtMostOnce)
+                .await
+                .unwrap();*/
 
                 YggioEvent::Connected
 
