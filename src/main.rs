@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use sifis_config::{Cache, ConfigParser};
 use sifis_dht::domocache::{DomoCache, DomoEvent};
 use std::error::Error;
+use serde_json::json;
+use chrono::prelude::*;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 struct DhtToMqtt {
@@ -44,12 +46,45 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 if let YggioEvent::Connected = event {
                         // publish entire cache on MQTT
                         println!("PUB ENTIRE CACHE ON MQTT");
-                        publish_all_on_mqtt(&mut sifis_cache, &mut yggio_manager).await;
+                        //publish_all_on_mqtt(&mut sifis_cache, &mut yggio_manager).await;
                 }
 
                 if let YggioEvent::GotMessage(m) = event {
                     println!("Yggio command received");
                     println!("{}", m);
+
+                    if let Some(topic_name) = m.get("topic_name") {
+                        if let Some(topic_uuid) = m.get("topic_uuid") {
+                            if let Some(desired_state) = m.get("desired_state") {
+
+                                let topic_name = topic_name.as_str().unwrap();
+
+                                let topic_uuid = topic_uuid.as_str().unwrap();
+
+                                let current_time = Utc::now().to_string();
+
+                                let on = desired_state.as_bool().unwrap();
+
+                                let command_message = json!(
+                                    {
+                                    "timestamp": current_time,
+                                        "command": {
+                                            "command_type": "turn_command",
+                                            "value": {
+                                                "topic_name": topic_name,
+                                                "topic_uuid": topic_uuid,
+                                                "desired_state": on
+                                            }
+                                        }
+                                    });
+
+                                sifis_cache.pub_value(command_message).await;
+
+                            }
+                        }
+                    }
+
+
                 }
             }
 
@@ -63,8 +98,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 // publish persistent message on Yggio
                                 let m2 = serde_json::to_string(&m.value).unwrap();
 
-                                yggio_manager.publish_on_mqtt(&m.topic_name, &m.topic_uuid, m2).await;
+                                if m.topic_name == "domo_light" {
+                                    yggio_manager.publish_on_mqtt(&m.topic_name, &m.topic_uuid, m2).await;
+                                }
                         }
+                        else {
+                                println!("Volatile");
+                        }
+
                     },
                     Err(e) => {
                         println!("{e}");

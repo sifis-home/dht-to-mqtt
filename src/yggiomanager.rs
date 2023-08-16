@@ -1,3 +1,4 @@
+use std::borrow::ToOwned;
 use rumqttc::{self, AsyncClient, Event, EventLoop, Incoming, MqttOptions, Packet, QoS, Transport};
 use rustls::ClientConfig;
 use std::error::Error;
@@ -18,7 +19,6 @@ const BASIC_CREDENTIALS_SET_ID: &str = "6463ab4545b7d8d57adba603";
 // -----
 
 // PHYSICAL ----
-
 const BASIC_CREDENTIALS_SET_ID_PHYSICAL: &str = "647da69774dabeee5bfaf8e2";
 const MQTT_USER_PHYSICAL: &str = "physical";
 const MQTT_PASSWORD_PHYSICAL: &str = "physical";
@@ -29,6 +29,13 @@ const MQTT_PUBLISH_PREFIX: &str = "yggio/generic/v2/";
 // this is the mqtt topic from which we can receive updates from all the iotNodes present in Yggio
 const MQTT_SUBSCRIBE_TOPIC: &str =
     "yggio/output/v2/6335585ffaf1370008dec0fc/iotnode/64144eab0b6304ad3bdd713c";
+
+
+const MQTT_SUBSCRIBE_TOPIC_EMULATED: &str =
+    "yggio/push/v1/6463ab4545b7d8d57adba603/#";
+
+const MQTT_SUBSCRIBE_TOPIC_PHYSICAL: &str = "yggio/push/v1/647da69774dabeee5bfaf8e2/#";
+
 
 pub enum YggioEvent {
     Connected,
@@ -50,7 +57,8 @@ pub struct YggioManager {
 impl YggioManager {
     pub fn new(testbed_type: &str) -> Result<Self, Box<dyn Error>> {
         let testbed_type = testbed_type.to_owned();
-        let mut mqttoptions = MqttOptions::new("sifis-dht-client-emulated", MQTT_BROKER_URL, MQTT_PORT);
+        let mut mqttoptions =
+            MqttOptions::new("sifis-dht-client-emulated", MQTT_BROKER_URL, MQTT_PORT);
 
         if testbed_type == "physical" {
             mqttoptions = MqttOptions::new("sifis-dht-client-physical", MQTT_BROKER_URL, MQTT_PORT);
@@ -233,10 +241,20 @@ impl YggioManager {
                 println!("Connected to the broker");
                 self.connected = true;
 
-                /*                self.client
-                .subscribe(MQTT_SUBSCRIBE_TOPIC, QoS::AtMostOnce)
-                .await
-                .unwrap();*/
+                if self.testbed_type == "physical" {
+                    self.client
+                    .subscribe(MQTT_SUBSCRIBE_TOPIC_PHYSICAL, QoS::AtMostOnce)
+                    .await
+                    .unwrap();
+                }
+
+                if self.testbed_type == "emulated" {
+                    self.client
+                        .subscribe(MQTT_SUBSCRIBE_TOPIC_EMULATED, QoS::AtMostOnce)
+                        .await
+                        .unwrap();
+                }
+
 
                 YggioEvent::Connected
 
@@ -261,14 +279,9 @@ impl YggioManager {
 
                 let v: serde_json::Value = serde_json::from_str(&payload_string).unwrap();
 
-                if let Some(iot_node) = v.get("iotnode") {
-                    if let Some(value) = iot_node.get("value") {
-                        //println!("{value}");
-                        return YggioEvent::GotMessage(value.to_owned());
-                    }
-                }
+                YggioEvent::GotMessage(v.to_owned())
 
-                YggioEvent::None
+
             }
             Ok(Event::Incoming(i)) => {
                 println!("Incoming = {i:?}");
