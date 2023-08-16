@@ -1,6 +1,6 @@
-use std::borrow::ToOwned;
 use rumqttc::{self, AsyncClient, Event, EventLoop, Incoming, MqttOptions, Packet, QoS, Transport};
 use rustls::ClientConfig;
+use std::borrow::ToOwned;
 use std::error::Error;
 use std::time::Duration;
 
@@ -30,12 +30,9 @@ const MQTT_PUBLISH_PREFIX: &str = "yggio/generic/v2/";
 const MQTT_SUBSCRIBE_TOPIC: &str =
     "yggio/output/v2/6335585ffaf1370008dec0fc/iotnode/64144eab0b6304ad3bdd713c";
 
-
-const MQTT_SUBSCRIBE_TOPIC_EMULATED: &str =
-    "yggio/push/v1/6463ab4545b7d8d57adba603/#";
+const MQTT_SUBSCRIBE_TOPIC_EMULATED: &str = "yggio/push/v1/6463ab4545b7d8d57adba603/#";
 
 const MQTT_SUBSCRIBE_TOPIC_PHYSICAL: &str = "yggio/push/v1/647da69774dabeee5bfaf8e2/#";
-
 
 pub enum YggioEvent {
     Connected,
@@ -243,9 +240,9 @@ impl YggioManager {
 
                 if self.testbed_type == "physical" {
                     self.client
-                    .subscribe(MQTT_SUBSCRIBE_TOPIC_PHYSICAL, QoS::AtMostOnce)
-                    .await
-                    .unwrap();
+                        .subscribe(MQTT_SUBSCRIBE_TOPIC_PHYSICAL, QoS::AtMostOnce)
+                        .await
+                        .unwrap();
                 }
 
                 if self.testbed_type == "emulated" {
@@ -254,7 +251,6 @@ impl YggioManager {
                         .await
                         .unwrap();
                 }
-
 
                 YggioEvent::Connected
 
@@ -280,8 +276,6 @@ impl YggioManager {
                 let v: serde_json::Value = serde_json::from_str(&payload_string).unwrap();
 
                 YggioEvent::GotMessage(v.to_owned())
-
-
             }
             Ok(Event::Incoming(i)) => {
                 println!("Incoming = {i:?}");
