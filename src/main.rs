@@ -98,7 +98,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 // publish persistent message on Yggio
                                 let m2 = serde_json::to_string(&m.value).unwrap();
 
-                                if m.topic_name == "domo_light" {
+                                if m.topic_name == "domo_light" ||
+                                   m.topic_name == "domo_window_sensor" ||
+                                   m.topic_name == "shelly_1pm" {
                                     yggio_manager.publish_on_mqtt(&m.topic_name, &m.topic_uuid, m2).await;
                                 }
                         }
