@@ -96,7 +96,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 println!("Persistent {m}");
 
                                 // publish persistent message on Yggio
-                                let m2 = serde_json::to_string(&m.value).unwrap();
+                                let m2 = serde_json::to_string(&m).unwrap();
 
                                 if m.topic_name == "domo_light" ||
                                    m.topic_name == "domo_window_sensor" ||
