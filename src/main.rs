@@ -102,7 +102,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                    m.topic_name == "domo_window_sensor" ||
                                    m.topic_name == "shelly_1pm" ||
                                    m.topic_name == "domo_pir_sensor" ||
-                                   m.topic_name == "domo_bistable_button" ||
+                                   m.topic_name == "domo_bistable_button"
                                  {
                                     yggio_manager.publish_on_mqtt(&m.topic_name, &m.topic_uuid, m2).await;
                                 }
