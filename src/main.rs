@@ -138,9 +138,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                 }
                             },
                             DomoEvent::VolatileData(m) => {
-                                println!("Volatile");
-                                let m2 = serde_json::to_string(&m).unwrap();
-                                yggio_manager.publish_on_mqtt("volatile_logger", "volatile_uuid", m2).await;
+                                if let Some(topic) = m.get("topic"){
+                                    if let Some(topic) = topic.as_str() {
+                                        if topic == "output_dev2" {
+                                            println!("Volatile");
+                                            let m2 = serde_json::to_string(&m).unwrap();
+                                            yggio_manager.publish_on_mqtt("volatile_logger", "volatile_uuid", m2).await;
+                                        }
+                                    }
+
+                                }
+
                             },
                             _ => {
 
