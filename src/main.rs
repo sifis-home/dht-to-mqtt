@@ -55,6 +55,34 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                     if let Some(topic_name) = m.get("topic_name") {
                         if let Some(topic_uuid) = m.get("topic_uuid") {
+
+                            if let Some(coap_client_commant) = m.get("coap_client_command") {
+                                println!("Command for coap client received");
+
+                                if let Some(coap_message) = coap_client_commant.as_object() {
+                                    if let Some(message) = coap_message.get("message") {
+                                        println!("Message {}", message);
+                                        if let Some(topic) = coap_message.get("topic") {
+                                            println!("Topic {}", topic);
+
+                                            let current_time = Utc::now().to_string();
+
+                                            let command_message = json!(
+                                            {
+                                                "timestamp": current_time,
+                                                "message": message,
+                                                "topic": topic
+                                            });
+
+                                            sifis_cache.pub_value(command_message).await;
+
+                                        }
+                                    }
+                                }
+
+
+                            }
+
                             if let Some(desired_state) = m.get("desired_state") {
 
                                 let topic_name = topic_name.as_str().unwrap();
@@ -92,7 +120,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
                 match message {
                     Ok(m) => {
-                        if let DomoEvent::PersistentData(m) = m {
+                        match m {
+                            DomoEvent::PersistentData(m) => {
                                 println!("Persistent {m}");
 
                                 // publish persistent message on Yggio
@@ -102,13 +131,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
                                    m.topic_name == "domo_window_sensor" ||
                                    m.topic_name == "shelly_1pm" ||
                                    m.topic_name == "domo_pir_sensor" ||
-                                   m.topic_name == "domo_bistable_button"
-                                 {
+                                   m.topic_name == "domo_bistable_button" ||
+                                   m.topic_name == "sifis_coap_client"
+                                {
                                     yggio_manager.publish_on_mqtt(&m.topic_name, &m.topic_uuid, m2).await;
                                 }
-                        }
-                        else {
+                            },
+                            DomoEvent::VolatileData(m) => {
                                 println!("Volatile");
+                                let m2 = serde_json::to_string(&m).unwrap();
+                                yggio_manager.publish_on_mqtt("volatile_logger", "volatile_uuid", m2).await;
+                            },
+                            _ => {
+
+                            }
                         }
 
                     },

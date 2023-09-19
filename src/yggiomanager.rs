@@ -58,8 +58,9 @@ impl YggioManager {
             MqttOptions::new("sifis-dht-client-emulated", MQTT_BROKER_URL, MQTT_PORT);
 
         if testbed_type == "physical" {
+
             mqttoptions = MqttOptions::new("sifis-dht-client-physical", MQTT_BROKER_URL, MQTT_PORT);
-        }
+            }
 
         mqttoptions.set_keep_alive(Duration::from_secs(10));
         mqttoptions.set_inflight(100);
